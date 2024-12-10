@@ -47,7 +47,6 @@ app = Flask(__name__)
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        print("hi")
 
         input_data = request.get_json()
 
@@ -56,7 +55,6 @@ def predict():
             return jsonify({"error": "No input data provided"}), 400
 
 
-        print("hi2")
         input_values = [input_data.get(feature) for feature in feature_names]
         if None in input_values:
             missing_features = [feature_names[i] for i, val in enumerate(input_values) if val is None]
@@ -65,17 +63,13 @@ def predict():
         input_array = np.array(input_values).reshape(1, -1)
         input_df = pd.DataFrame(input_array, columns=feature_names)
 
-        print("hi4")
         prediction = abc.predict(input_df)
 
-        print("hi5")
 
         prediction = int(prediction[0])
 
         connection = get_db_connection()
-        print("hiii")
         cursor = connection.cursor()
-        print("hi3")
 
         query = """
                 INSERT INTO prediction_data (
