@@ -44,6 +44,10 @@ feature_names = [
 
 app = Flask(__name__)
 
+@app.route('/')
+def index():
+    return "<center><h1>Flask App deployment on Azure</h1></center>"
+
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
