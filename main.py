@@ -3,6 +3,13 @@ import joblib
 import numpy as np
 import pandas as pd
 import mysql.connector
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv()
+SQL_CONNECTION_STRING = os.getenv("SQL_CONNECTION_STRING")
+
 
 
 
@@ -11,7 +18,7 @@ def get_db_connection():
     connection = mysql.connector.connect(
         host='packet-holder.mysql.database.azure.com',
         user='Kishan',
-        password='Mantary123',
+        password=SQL_CONNECTION_STRING,
         database='packetstore'
     )
     print("connection successful")
