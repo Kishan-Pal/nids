@@ -7,17 +7,20 @@ import mysql.connector
 
 
 def get_db_connection():
+    print("connecting")
     connection = mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='venkat@23',
-        database='eventus'
+        host='packet-holder.mysql.database.azure.com',
+        user='Kishan',
+        password='Mantary123',
+        database='packetstore'
     )
+    print("connection successful")
     return connection
 
 
 
-abc = joblib.load("C:/Users/kalya/PycharmProjects/pythonProject/regression_tree_modenew.pkl")
+#abc = joblib.load("C:/Users/kalya/PycharmProjects/pythonProject/regression_tree_modenew.pkl")
+abc = joblib.load("regression_tree_modenew.pkl")
 
 feature_names = [
     "duration", "protocol_type", "service", "flag", "src_bytes", "dst_bytes", "land",
@@ -37,6 +40,7 @@ app = Flask(__name__)
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
+        print("hi")
 
         input_data = request.get_json()
 
@@ -45,6 +49,7 @@ def predict():
             return jsonify({"error": "No input data provided"}), 400
 
 
+        print("hi2")
         input_values = [input_data.get(feature) for feature in feature_names]
         if None in input_values:
             missing_features = [feature_names[i] for i, val in enumerate(input_values) if val is None]
@@ -53,12 +58,17 @@ def predict():
         input_array = np.array(input_values).reshape(1, -1)
         input_df = pd.DataFrame(input_array, columns=feature_names)
 
+        print("hi4")
         prediction = abc.predict(input_df)
+
+        print("hi5")
 
         prediction = int(prediction[0])
 
         connection = get_db_connection()
+        print("hiii")
         cursor = connection.cursor()
+        print("hi3")
 
         query = """
                 INSERT INTO prediction_data (
