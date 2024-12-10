@@ -14,14 +14,12 @@ SQL_CONNECTION_STRING = os.getenv("SQL_CONNECTION_STRING")
 
 
 def get_db_connection():
-    print("connecting")
     connection = mysql.connector.connect(
         host='packet-holder.mysql.database.azure.com',
         user='Kishan',
         password=SQL_CONNECTION_STRING,
         database='packetstore'
     )
-    print("connection successful")
     return connection
 
 
