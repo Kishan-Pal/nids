@@ -43,7 +43,9 @@ feature_names = [
 
 app = Flask(__name__)
 
-CORS(app)
+#CORS(app)
+CORS(app, resources={r"/predict": {"origins": "*"}})
+
 
 @app.route('/')
 def index():
