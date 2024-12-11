@@ -19,7 +19,7 @@ def get_db_connection():
         host='packet-holder.mysql.database.azure.com',
         user='Kishan',
         password=SQL_CONNECTION_STRING,
-        database='packetstore'
+        database='packet_data'
     )
     return connection
 
