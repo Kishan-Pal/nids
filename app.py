@@ -8,23 +8,26 @@ import os
 from flask_cors import CORS
 import ipaddress
 
-
+# get mysql connection password from .env
 load_dotenv()
 SQL_CONNECTION_STRING = os.getenv("SQL_CONNECTION_STRING")
 
+# convert all the non numeric data into numeric values
 def convert_to_int(input_data):
     for key, value in input_data.items():
+        # convert ip addresses into corresponding integers
         if key == 'ip_src' or key == 'ip_dst':
             ip_int = int(ipaddress.ip_address(value))
             input_data[key] = ip_int
 
+        # converting flags into boolean
         if value == 'True':
             input_data[key] = 1
         elif value == 'False' or value == 'null':
             input_data[key] = 0
     return input_data
 
-
+# connect to azure sql database
 def get_db_connection():
     connection = mysql.connector.connect(
         host='packet-holder.mysql.database.azure.com',
@@ -35,22 +38,10 @@ def get_db_connection():
     return connection
 
 
+# load the decision tree model
+decision_tree_model = joblib.load("decision_tree_2.pkl")
 
-abc = joblib.load("simulation_model1.pkl")
-
-# feature_names = [
-#     "duration", "protocol_type", "service", "flag", "src_bytes", "dst_bytes", "land",
-#     "wrong_fragment", "urgent", "hot", "num_failed_logins", "logged_in", "num_compromised",
-#     "root_shell", "su_attempted", "num_root", "num_file_creations", "num_shells",
-#     "num_access_files", "num_outbound_cmds", "is_host_login", "is_guest_login",
-#     "count", "srv_count", "serror_rate", "srv_serror_rate", "rerror_rate",
-#     "srv_rerror_rate", "same_srv_rate", "diff_srv_rate", "srv_diff_host_rate",
-#     "dst_host_count", "dst_host_srv_count", "dst_host_same_srv_rate",
-#     "dst_host_diff_srv_rate", "dst_host_same_src_port_rate",
-#     "dst_host_srv_diff_host_rate", "dst_host_serror_rate",
-#     "dst_host_srv_serror_rate", "dst_host_rerror_rate", "dst_host_srv_rerror_rate"
-# ]
-
+# features used for prediction
 feature_names = [
     "frame_len",
     "frame_time_delta",
@@ -72,37 +63,50 @@ feature_names = [
 
 app = Flask(__name__)
 
-#CORS(app)
+# enable cors for all origins
 CORS(app, resources={r"/predict": {"origins": "*"}})
 
-
+# empty landing page
 @app.route('/')
 def index():
     return "<center><h1>Flask App deployment on Azure</h1></center>"
 
+# endpoint to predict the output
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         input_data = request.get_json()
+        original_data = input_data.copy()
         intput_data = convert_to_int(input_data)
 
-
+        # if no data is received
         if not input_data:
             return jsonify({"error": "No input data provided"}), 400
 
+        # generate a list for the input json
         input_values = [input_data.get(feature) for feature in feature_names]
+        original_values = [original_data.get(feature) for feature in feature_names]
+
+        # check for missing feature
         if None in input_values:
             missing_features = [feature_names[i] for i, val in enumerate(input_values) if val is None]
             return jsonify({"error": f"Missing features: {', '.join(missing_features)}"}), 400
-        print(input_values)
+
+        # convert into dataframe
         input_array = np.array(input_values).reshape(1, -1)
         input_df = pd.DataFrame(input_array, columns=feature_names)
 
-        prediction = abc.predict(input_df)
+        # run the model
+        prediction = decision_tree_model.predict(input_df)
 
 
         prediction = int(prediction[0])
 
+        prediction_string = "attack"
+        if prediction == 0:
+            prediction_string = "normal"
+
+        # connect to the database
         connection = get_db_connection()
         cursor = connection.cursor()
 
@@ -116,20 +120,18 @@ def predict():
 
 
 
-        data = tuple(input_values + [prediction])
+        data = tuple(original_values + [prediction])
 
-
+        # add data into the database
         cursor.execute(query, data)
 
-
         connection.commit()
-
 
         cursor.close()
         connection.close()
 
 
-        return jsonify({"prediction": prediction}), 200
+        return jsonify({"prediction": prediction_string}), 200
 
 
     except Exception as e:
