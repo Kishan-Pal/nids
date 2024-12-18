@@ -77,7 +77,7 @@ def predict():
     try:
         input_data = request.get_json()
         original_data = input_data.copy()
-        intput_data = convert_to_int(input_data)
+        input_data = convert_to_int(input_data)
 
         # if no data is received
         if not input_data:
