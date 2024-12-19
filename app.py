@@ -39,7 +39,7 @@ def get_db_connection():
 
 
 # load the decision tree model
-decision_tree_model = joblib.load("decision_tree_2.pkl")
+decision_tree_model = joblib.load("decision_tree_model_3.pkl")
 
 # features used for prediction
 feature_names = [
